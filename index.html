@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Deteksi Karakter</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <header>
+        <h1>Deteksi Karakter dengan CNN</h1>
+        <p>Unggah gambar untuk mendeteksi karakter menggunakan Convolutional Neural Network</p>
+    </header>
+    <div class="container">
+        <div class="upload-section">
+            <form id="upload-form" enctype="multipart/form-data">
+                <div class="file-input-wrapper">
+                    <input type="file" id="file-input" accept="image/*" multiple required>
+                    <label for="file-input" class="file-label">Pilih Gambar</label>
+                </div>
+                <div id="image-preview"></div>
+                <div class="color-picker-wrapper">
+                    <label for="color-picker">Pilih Warna Background Hasil:</label>
+                    <input type="color" id="color-picker" value="#f8f9fa">
+                </div>
+                <div class="button-group">
+                    <button type="submit" class="btn btn-primary">Deteksi</button>
+                    <button type="button" id="clear-button" class="btn btn-secondary">Hapus Hasil</button>
+                </div>
+            </form>
+        </div>
+        <div id="result" class="result-section"></div>
+    </div>
+    <script>
+        document.getElementById('upload-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            const button = document.querySelector('button[type="submit"]');
+            button.disabled = true;
+            button.textContent = 'Memproses...';
+            const files = Array.from(document.getElementById('file-input').files);
+            const formData = new FormData();
+            files.forEach(file => formData.append('files', file));
+
+            fetch('/predict', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.text())
+            .then(html => {
+                const resultDiv = document.getElementById('result');
+                resultDiv.innerHTML = html;
+                // Apply current background color to new results
+                const selectedColor = document.getElementById('color-picker').value;
+                resultDiv.style.backgroundColor = selectedColor;
+                button.disabled = false;
+                button.textContent = 'Deteksi';
+            })
+            .catch(error => {
+                document.getElementById('result').innerHTML = '<p>Kesalahan: ' + error.message + '</p>';
+                button.disabled = false;
+                button.textContent = 'Deteksi';
+            });
+        });
+
+        document.getElementById('clear-button').addEventListener('click', function() {
+            document.getElementById('result').innerHTML = '';
+            document.getElementById('file-input').value = '';
+        });
+
+        // Color picker functionality
+        document.getElementById('color-picker').addEventListener('input', function() {
+            const selectedColor = this.value;
+            const resultDiv = document.getElementById('result');
+            resultDiv.style.backgroundColor = selectedColor;
+        });
+    </script>
+</body>
+</html>
